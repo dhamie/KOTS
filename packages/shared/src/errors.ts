@@ -1,0 +1,57 @@
+import { z } from "zod";
+
+/** Every API error has this shape. `code` is stable; `message` is for humans. */
+export const ApiErrorBody = z.object({
+  code: z.string(),
+  message: z.string(),
+  details: z.unknown().optional(),
+  correlationId: z.string(),
+});
+export type ApiErrorBody = z.infer<typeof ApiErrorBody>;
+
+export const ERROR_CODES = [
+  "VALIDATION_FAILED",
+  "UNAUTHENTICATED",
+  "INVALID_CREDENTIALS",
+  "ACCOUNT_BANNED",
+  "FORBIDDEN",
+  "ORIGIN_REJECTED",
+  "NOT_FOUND",
+  "RATE_LIMITED",
+  "PAYLOAD_TOO_LARGE",
+  "EMAIL_TAKEN",
+  "HANDLE_TAKEN",
+  "FAMILY_NAME_TAKEN",
+  "FAMILY_TAG_TAKEN",
+  "ALREADY_IN_FAMILY",
+  "ALREADY_MEMBER",
+  "ALREADY_INVITED",
+  "INVITATION_EXPIRED",
+  "DON_MUST_TRANSFER",
+  "FAMILY_NOT_EMPTY",
+  "TERRITORY_OWNED",
+  "NOT_ADJACENT",
+  "INSUFFICIENT_FUNDS",
+  "ALREADY_HIRED",
+  "PRICE_CHANGED",
+  "STORAGE_FULL",
+  "INSUFFICIENT_STOCK",
+  "MARKET_FULL",
+  "TRADE_CLOSED",
+  "TOO_NEW",
+  "TOO_MANY_OFFERS",
+  "BLOCKED",
+  "PROPOSAL_CLOSED",
+  "TOO_MANY_PROPOSALS",
+  "TERRITORY_NOT_HELD",
+  "TERRITORY_CONTESTED",
+  "PROTECTED",
+  "CEASEFIRE",
+  "BATTLE_COOLDOWN",
+  "LAST_TERRITORY",
+  "ALREADY_FIGHTING",
+  "BATTLE_CLOSED",
+  "HENCHMAN_BUSY",
+  "INTERNAL",
+] as const;
+export type ErrorCode = (typeof ERROR_CODES)[number];

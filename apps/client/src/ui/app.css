@@ -1,0 +1,767 @@
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: #14110f;
+  color: #f2e8d5;
+  font-family: system-ui, sans-serif;
+}
+
+.app {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.map {
+  position: absolute;
+  inset: 0;
+}
+
+.panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  max-width: calc(100% - 24px);
+  padding: 8px 14px;
+  background: rgba(20, 17, 15, 0.85);
+  border: 1px solid #5a4a36;
+  border-radius: 6px;
+}
+
+.panel h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.panel p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.panel .error {
+  color: #ff8a7a;
+}
+
+/* Phase 2 panels */
+.panel.side {
+  top: 12px;
+  left: 12px;
+  right: auto;
+  width: 360px;
+  max-height: calc(100% - 80px);
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+.panel.topbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+
+[data-testid="health-panel"] {
+  top: auto;
+  bottom: 12px;
+}
+
+.panel h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #c9a96e;
+}
+
+.panel form {
+  display: grid;
+  gap: 8px;
+}
+
+.panel form.inline {
+  display: flex;
+}
+
+.panel label {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.panel input,
+.panel select,
+.panel button {
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  background: #241e18;
+  border: 1px solid #5a4a36;
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+
+.panel button {
+  cursor: pointer;
+  background: #3b3226;
+}
+
+.panel button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.panel button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #c9a96e;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.tabs button.active {
+  background: #5a4a36;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #2f281f;
+  font-size: 13px;
+}
+
+.list li > span:last-child {
+  display: flex;
+  gap: 4px;
+}
+
+.activity li {
+  font-size: 12px;
+}
+
+.muted {
+  color: #9c8f7a;
+}
+
+.tag {
+  color: #c9a96e;
+  font-size: 0.8em;
+}
+
+.danger {
+  margin-top: 14px;
+}
+
+@media (max-width: 600px) {
+  .panel.side {
+    width: auto;
+    right: 12px;
+  }
+}
+
+/* Phase 3: map shell */
+.panel.toolbar {
+  top: 12px;
+  left: 12px;
+  right: auto;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+}
+
+.panel.toolbar button.active {
+  background: #5a4a36;
+}
+
+.panel.side {
+  top: 58px;
+  max-height: calc(100% - 130px);
+}
+
+.panel.territory {
+  top: 58px;
+  right: 12px;
+  width: 300px;
+  max-height: calc(100% - 130px);
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+.panel.territory h2 {
+  font-size: 18px;
+  margin: 2px 0;
+}
+
+.panel.territory .kind {
+  color: #c9a96e;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.panel.territory p {
+  margin-bottom: 8px;
+}
+
+.panel.territory dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.panel.territory dt {
+  color: #9c8f7a;
+}
+
+.panel.territory dd {
+  margin: 0;
+  text-align: right;
+}
+
+.panel .close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+
+.small {
+  font-size: 12px;
+}
+
+/* Phase 4: money and holdings */
+.warn {
+  color: #f0a35e;
+}
+
+.panel.territory .claim {
+  margin: 10px 0 6px;
+}
+
+.panel.territory .claim button {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.panel details summary {
+  cursor: pointer;
+  color: #9c8f7a;
+  margin: 6px 0;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.panel label.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #8c7b63;
+  color: #14110f;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .panel.side,
+  .panel.territory {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: 55%;
+    border-radius: 10px 10px 0 0;
+  }
+
+  /* Below the toolbar: on a phone the two don't fit side by side. */
+  .panel.topbar {
+    top: 60px;
+    right: 12px;
+    font-size: 12px;
+  }
+
+  [data-testid="health-panel"] {
+    display: none;
+  }
+}
+
+/* Phase 4b: henchmen */
+.crew li {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.crew .controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.crew .controls select {
+  flex: 1;
+}
+
+.candidates .candidate {
+  display: block;
+  padding: 8px 0;
+}
+
+.candidate .kind {
+  color: #c9a96e;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.candidate .attributes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 12px;
+  margin: 6px 0;
+  font-size: 11px;
+}
+
+.candidate .attributes div {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  align-items: center;
+}
+
+.candidate .attributes dt {
+  color: #9c8f7a;
+}
+
+.candidate .attributes dd {
+  position: relative;
+  margin: 0;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+.candidate .attributes .bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #8a6d3b;
+  border-radius: 2px;
+}
+
+.candidate .attributes .value {
+  position: absolute;
+  right: 3px;
+  top: -2px;
+  font-size: 10px;
+}
+
+/* Phase 5a: market */
+.market .tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.market .tabs button.active {
+  background: #5a4a36;
+}
+
+.market table.prices {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.market .prices th,
+.market .prices td {
+  padding: 3px 4px;
+  text-align: right;
+}
+
+.market .prices th:first-child,
+.market .prices td:first-child {
+  text-align: left;
+}
+
+.market .prices th {
+  color: #9c8f7a;
+  font-weight: normal;
+}
+
+.market .prices tbody tr {
+  cursor: pointer;
+}
+
+.market .prices tr.selected td {
+  background: rgba(201, 169, 110, 0.15);
+}
+
+.market .order {
+  display: flex;
+  gap: 8px;
+}
+
+.market .order label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  font-size: 12px;
+}
+
+.market .order-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.market .order-buttons button {
+  width: 100%;
+}
+
+/* Phase 5b: trades */
+.market .tabs.primary {
+  border-bottom: 1px solid rgba(201, 169, 110, 0.25);
+  padding-bottom: 6px;
+}
+
+.trades .offers li {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.trades .offers .controls {
+  display: flex;
+  gap: 6px;
+}
+
+.trades .new-offer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trades .new-offer label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+.trades fieldset.items {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px 8px;
+  margin: 0;
+}
+
+.trades .items .item {
+  display: grid;
+  grid-template-columns: 1fr 90px auto;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+/* Phase 6a: chat, notifications */
+.badge {
+  display: inline-block;
+  min-width: 16px;
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #b5452f;
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.panel.map-control {
+  top: auto;
+  bottom: 12px;
+  left: 12px;
+  right: auto;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.panel.map-control.active {
+  background: #5a4a36;
+}
+
+.panel .bell {
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.panel.notifications {
+  top: 58px;
+  right: 12px;
+  width: 320px;
+  max-height: calc(100% - 130px);
+  overflow-y: auto;
+  padding: 12px 16px;
+  z-index: 5;
+}
+
+.panel.notifications li button.link {
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  font-size: 13px;
+}
+
+.panel.notifications li.unread button.link {
+  font-weight: bold;
+}
+
+.chat .messages {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat .messages li {
+  font-size: 13px;
+}
+
+.chat .messages .meta {
+  font-size: 11px;
+}
+
+.chat .messages .mine .meta strong {
+  color: #c9a96e;
+}
+
+.chat .messages .more {
+  margin-left: 6px;
+  text-decoration: none;
+}
+
+.chat .body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.chat .composer {
+  display: flex;
+  gap: 6px;
+}
+
+.chat .composer input {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .panel.notifications {
+    top: 104px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+/* Phase 6b: diplomacy */
+.proposals .ceasefire {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border: 1px solid rgba(201, 169, 110, 0.4);
+  border-radius: 4px;
+  color: #c9a96e;
+}
+
+.proposals .offers li {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.proposals .offers .controls {
+  display: flex;
+  gap: 6px;
+}
+
+.proposals .new-proposal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.proposals .new-proposal label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+}
+
+/* Phase 7b: battles */
+.battle .sides {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.battle .sides .mine {
+  font-weight: bold;
+}
+
+.battle .win {
+  color: #9fd38a;
+}
+
+.battle .tactics {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.battle .tactics button {
+  flex: 1;
+}
+
+.battle .tactics button.active {
+  background: #5a4a36;
+  outline: 1px solid #c9a96e;
+}
+
+.battle .replay {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  margin-bottom: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+.battle .strength {
+  display: grid;
+  grid-template-columns: 90px 1fr 40px;
+  align-items: center;
+  gap: 6px;
+}
+
+.battle .strength .track {
+  position: relative;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+.battle .strength .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 2px;
+  animation: battle-grow 0.9s ease-out;
+}
+
+.battle .strength.attacker .fill {
+  background: #b5523b;
+}
+
+.battle .strength.defender .fill {
+  background: #4f7fa0;
+}
+
+.battle .strength .value {
+  text-align: right;
+}
+
+@keyframes battle-grow {
+  from {
+    width: 0;
+  }
+}
+
+.battle .steps {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.contested {
+  color: #ff8a7a;
+}
+
+/* Phase 8a: city events */
+.news {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.news li {
+  padding: 6px 8px;
+  border-left: 3px solid #c9a96e;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.news li.expired {
+  border-left-color: rgba(255, 255, 255, 0.15);
+  opacity: 0.7;
+}
+
+.news p {
+  margin: 2px 0 0;
+}
+
+.event {
+  padding: 6px 8px;
+  border-left: 3px solid #c9a96e;
+  background: rgba(201, 169, 110, 0.08);
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@kots/shared",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "zod": "^4.6.5",
+    "@kots/content": "*"
+  }
+}

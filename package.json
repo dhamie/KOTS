@@ -1,0 +1,38 @@
+{
+  "name": "kots",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d --wait db",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate -w @kots/server",
+    "db:generate": "npm run db:generate -w @kots/server",
+    "dev:api": "npm run dev:api -w @kots/server",
+    "dev:worker": "npm run dev:worker -w @kots/server",
+    "dev:client": "npm run dev -w @kots/client",
+    "typecheck": "npm run typecheck --workspaces && tsc -p e2e",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:db": "npm test -w @kots/server",
+    "build": "npm run build -w @kots/client -w @kots/server",
+    "test:e2e": "bash e2e/run.sh",
+    "db:seed": "npm run db:seed -w @kots/server",
+    "db:setup": "npm run db:migrate && npm run db:seed",
+    "mod:grant": "npm run mod:grant -w @kots/server --",
+    "mod:revoke": "npm run mod:revoke -w @kots/server --",
+    "event:trigger": "npm run event:trigger -w @kots/server --"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.12.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  }
+}

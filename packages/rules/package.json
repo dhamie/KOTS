@@ -1,0 +1,13 @@
+{
+  "name": "@kots/rules",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@kots/content": "*"
+  }
+}

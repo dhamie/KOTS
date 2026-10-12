@@ -1,0 +1,23 @@
+# Local development database. Start with: npm run db:up
+# A fixed project name, so the container and volume don't depend on the folder's name.
+name: kots
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kots
+      POSTGRES_PASSWORD: kots
+      POSTGRES_DB: kots
+    ports:
+      # 5434 on the host, to avoid clashing with LagosFighter (5433) and other local Postgres instances.
+      - "5434:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kots -d kots"]
+      interval: 2s
+      retries: 30
+
+volumes:
+  db-data:
