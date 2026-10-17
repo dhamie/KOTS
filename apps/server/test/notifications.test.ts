@@ -7,7 +7,7 @@ import { FamiliesService } from "../src/modules/families/families.service";
 import { TerritoriesService } from "../src/modules/territories/territories.service";
 import { TradesService } from "../src/modules/trades/trades.service";
 import { economyHelpers } from "./economy-helpers";
-import { newPlayer, resetTestDatabase, startApi, TestClock, type Client, type TestApi } from "./helpers";
+import { newPlayer, resetTestDatabase, startApi, TestClock, type Client, type TestApi, keyed } from "./helpers";
 
 let api: TestApi;
 const clock = new TestClock();
@@ -49,7 +49,7 @@ describe("who is notified", () => {
     const a = await family(["quartermaster"]);
     const b = await family(["quartermaster", "associate", "consigliere"]);
     await Promise.all([ageForTrading(a.id), ageForTrading(b.id)]);
-    const offer = await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] });
+    const offer = await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] }, keyed());
     expect(offer.status).toBe(201);
 
     const [bQuartermaster, bAssociate, bConsigliere] = b.members;
@@ -67,11 +67,11 @@ describe("who is notified", () => {
     const a = await family();
     const b = await family();
     await Promise.all([ageForTrading(a.id), ageForTrading(b.id)]);
-    const declined = await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] });
+    const declined = await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] }, keyed());
     expect((await b.don.client.post(`/trades/${declined.body.id}/decline`)).status).toBe(200);
     expect(await types(a.don.client)).toEqual(["trade.declined"]);
 
-    await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] });
+    await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] }, keyed());
     const sweeper = api.app.get(TradesService);
     const later = new Date(clock.now().getTime() + 2 * DAY);
     await Promise.all([sweeper.sweepExpired(later), sweeper.sweepExpired(later)]);

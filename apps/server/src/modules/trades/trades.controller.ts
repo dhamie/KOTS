@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Headers, HttpCode, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { OfferRequest, TradeQuery } from "@kots/shared";
 import type { z } from "zod";
+import { idempotencyKey } from "../../common/idempotency-key";
 import { UuidParam } from "../../common/uuid-param.pipe";
 import { ZodPipe } from "../../common/zod.pipe";
 import { Auth, AuthGuard } from "../auth/auth.guard";
@@ -21,8 +22,13 @@ export class TradesController {
   }
 
   @Post("families/:familyId/trades")
-  propose(@Auth() auth: AuthContext, @Param("familyId", FamilyId) familyId: string, @Body(new ZodPipe(OfferRequest)) body: OfferRequest) {
-    return this.trades.propose(auth.playerId, familyId, body);
+  propose(
+    @Auth() auth: AuthContext,
+    @Param("familyId", FamilyId) familyId: string,
+    @Headers("idempotency-key") key: string | undefined,
+    @Body(new ZodPipe(OfferRequest)) body: OfferRequest,
+  ) {
+    return this.trades.propose(auth.playerId, familyId, idempotencyKey(key, "offer"), body);
   }
 
   @Post("trades/:tradeId/accept")

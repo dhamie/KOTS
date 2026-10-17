@@ -6,9 +6,7 @@ import { api } from "../../api/http";
 import { useCityNews } from "../events/useCityNews";
 import { naira } from "../format";
 import { useAction } from "../useAction";
-
-/** A fresh Idempotency-Key. getRandomValues works over plain http too (randomUUID needs a secure context). */
-const newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+import { useRequestKey } from "../useRequestKey";
 
 const placeName = (slug: string) => CITY.territories.get(slug)?.name ?? slug;
 
@@ -26,6 +24,7 @@ export function MarketView(props: { me: MeResponse; slug: string; revision: numb
   const [quantity, setQuantity] = useState(10);
   const [done, setDone] = useState<string | null>(null);
   const { busy, error, run } = useAction();
+  const keyed = useRequestKey();
   const events = useCityNews().filter((e) => e.state === "active" && ((e.scope === "market" && e.scopeId === slug) || e.scope === "city"));
 
   const load = useCallback(
@@ -64,7 +63,7 @@ export function MarketView(props: { me: MeResponse; slug: string; revision: numb
   const submit = async (side: OrderSide, total: number) => {
     setDone(null);
     const ok = await run(async () => {
-      const o = await api.order(slug, { side, good, quantity, limitTotal: total }, newKey());
+      const o = await keyed((key) => api.order(slug, { side, good, quantity, limitTotal: total }, key));
       setDone(`${side === "buy" ? "Bought" : "Sold"} ${o.quantity} ${goodDef(o.good).label.toLowerCase()} for ${naira(o.total)}.`);
     });
     if (ok) onChanged();

@@ -59,6 +59,11 @@ const RULES: Record<string, Rule> = {
     text: (p) => `A street festival in ${p.district} paid your family ₦${Number(p.amount).toLocaleString("en-NG")}.`,
   },
   "event.police_sweep": { to: "all", target: "henchmen", text: (p) => `A police sweep in ${p.district} rattled ${p.henchmen === 1 ? "one of your guards" : `${p.henchmen} of your guards`}: −${p.morale} morale.` },
+  "admin.adjusted": {
+    to: "treasury.view",
+    target: "family",
+    text: (p) => `An administrator ${Number(p.amount) > 0 ? "credited" : "debited"} your treasury ₦${Math.abs(Number(p.amount)).toLocaleString("en-NG")}: ${p.reason}`,
+  },
   "proposal.expired": { to: "diplomacy.talk", target: "diplomacy", text: (p) => `A proposal with [${p.with}] expired: ${p.summary}.` },
 };
 

@@ -23,6 +23,10 @@ export function connectLive(): void {
     connectedBefore = true;
   });
   socket.on("event", emit);
+  // The server ended the session (logged out elsewhere, or banned): listeners reload, find it gone and sign out.
+  socket.on("disconnect", (reason) => {
+    if (reason === "io server disconnect") emit({ type: "resync" });
+  });
 }
 
 export function disconnectLive(): void {

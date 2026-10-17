@@ -7,7 +7,7 @@ import { uuidv7 } from "../src/common/uuid";
 import { seedMap, seedMarkets } from "../src/db/seed";
 import { TradesService } from "../src/modules/trades/trades.service";
 import { economyHelpers } from "./economy-helpers";
-import { newPlayer, resetTestDatabase, startApi, TestClock, type TestApi } from "./helpers";
+import { newPlayer, resetTestDatabase, startApi, TestClock, type TestApi, keyed } from "./helpers";
 
 let api: TestApi;
 const clock = new TestClock();
@@ -40,7 +40,7 @@ const buy = (c: Client, good: GoodKey, quantity: number) =>
 const held = async (c: Client, familyId: string, good: GoodKey) =>
   Inventory.parse((await c.get(`/families/${familyId}/inventory`)).body).items.find((i) => i.good === good)?.quantity ?? 0;
 const offer = (from: Fam, to: Fam, gives: TradeItem[], wants: TradeItem[], c: Client = from.don.client) =>
-  c.post(`/families/${from.id}/trades`, { to: to.tag, gives, wants });
+  c.post(`/families/${from.id}/trades`, { to: to.tag, gives, wants }, keyed());
 const box = async (c: Client, familyId: string, which: "incoming" | "outgoing" | "closed", query = "") =>
   TradePage.parse((await c.get(`/families/${familyId}/trades?box=${which}${query}`)).body);
 const sweep = (at: Date = clock.now()) => api.app.get(TradesService).sweepExpired(at);
@@ -82,7 +82,7 @@ describe("making an offer", () => {
     expect((await offer(a, b, [{ good: "gold" as GoodKey, quantity: 1 }], [])).status).toBe(400);
     expect((await offer(a, b, [{ cash: TRADES.maxCash + 1 }], [])).status).toBe(400);
     expect((await offer(a, a, [{ cash: 1 }], [])).status).toBe(400);
-    expect((await a.don.client.post(`/families/${a.id}/trades`, { to: "ZZZZZ", gives: [{ cash: 1 }], wants: [] })).status).toBe(404);
+    expect((await a.don.client.post(`/families/${a.id}/trades`, { to: "ZZZZZ", gives: [{ cash: 1 }], wants: [] }, keyed())).status).toBe(404);
     for (let i = 0; i < TRADES.maxOpenOutgoing; i++) expect((await offer(a, b, [{ cash: i + 1 }], [])).status).toBe(201);
     const over = await offer(a, b, [{ cash: 99 }], []);
     expect([over.status, over.body.code]).toEqual([409, "TOO_MANY_OFFERS"]);

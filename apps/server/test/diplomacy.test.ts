@@ -7,7 +7,7 @@ import { seedMap } from "../src/db/seed";
 import { DiplomacyService } from "../src/modules/diplomacy/diplomacy.service";
 import { TerritoriesService } from "../src/modules/territories/territories.service";
 import { economyHelpers } from "./economy-helpers";
-import { newPlayer, resetTestDatabase, startApi, TestClock, type Client, type TestApi } from "./helpers";
+import { newPlayer, resetTestDatabase, startApi, TestClock, type Client, type TestApi, keyed } from "./helpers";
 import { closeAllSockets, connect, settle } from "./socket-helpers";
 
 let api: TestApi;
@@ -44,7 +44,7 @@ const openRoom = async (from: Fam, to: Fam) => {
   expect(res.status).toBe(200);
   return ChatChannel.parse(res.body);
 };
-const propose = (c: Client, roomId: string, terms: unknown) => c.post(`/diplomacy/rooms/${roomId}/proposals`, { terms });
+const propose = (c: Client, roomId: string, terms: unknown) => c.post(`/diplomacy/rooms/${roomId}/proposals`, { terms }, keyed());
 const proposeOk = async (c: Client, roomId: string, terms: unknown) => {
   const res = await propose(c, roomId, terms);
   expect([res.status, res.body.code]).toEqual([201, undefined]);

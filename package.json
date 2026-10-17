@@ -24,7 +24,8 @@
     "db:setup": "npm run db:migrate && npm run db:seed",
     "mod:grant": "npm run mod:grant -w @kots/server --",
     "mod:revoke": "npm run mod:revoke -w @kots/server --",
-    "event:trigger": "npm run event:trigger -w @kots/server --"
+    "event:trigger": "npm run event:trigger -w @kots/server --",
+    "admin": "npm run admin -w @kots/server --"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",

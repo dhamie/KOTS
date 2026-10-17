@@ -60,6 +60,13 @@ export class SessionsService {
     return { userId: row.userId, playerId: row.playerId, sessionId: id, refreshed };
   }
 
+  /** Ends every session of a user (a ban) and disconnects their live connections. Returns how many ended. */
+  async deleteAllFor(db: DbOrTx, userId: string): Promise<number> {
+    const ended = await db.delete(sessions).where(eq(sessions.userId, userId)).returning({ id: sessions.id });
+    for (const s of ended) await this.realtime.sessionEnded(db, s.id);
+    return ended.length;
+  }
+
   /** Also disconnects the session's live connections. */
   async delete(sessionId: string): Promise<void> {
     await this.db.transaction(async (tx) => {

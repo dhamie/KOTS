@@ -315,6 +315,8 @@ function describeEntry(e: LedgerEntry): string {
       return `Battle called off, fee refunded: ${place}`;
     case "event_windfall":
       return "Street festival";
+    case "admin_adjustment":
+      return "Adjusted by an administrator";
     default:
       return e.reason.replace(/_/g, " ");
   }
@@ -446,6 +448,8 @@ function describe(a: ActivityEntry): string {
       return `The battle with [${p.with}] for ${p.name} was called off${p.refunded ? `; ${naira(p.refunded)} refunded` : ""}`;
     case "event.festival":
       return `A street festival in ${p.district} paid ${naira(p.amount ?? 0)} (${p.territories === 1 ? "one territory" : `${p.territories} territories`})`;
+    case "admin.adjusted":
+      return `An administrator ${(p.amount ?? 0) > 0 ? "credited" : "debited"} ${naira(Math.abs(p.amount ?? 0))}: ${p.reason}`;
     case "event.police_sweep":
       return `A police sweep in ${p.district} cost ${p.henchmen === 1 ? "one guard" : `${p.henchmen} guards`} ${p.morale} morale`;
     default:

@@ -78,6 +78,20 @@
       "when": 1791745140946,
       "tag": "0010_events",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791986750703,
+      "tag": "0011_admin",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792006915766,
+      "tag": "0012_request_keys",
+      "breakpoints": true
     }
   ]
 }

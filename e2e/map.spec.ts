@@ -56,6 +56,16 @@ test("the map opens at city view; jumping to a district shows territory markers;
   await panel.getByRole("button", { name: "Close" }).click();
   await expect(panel).toHaveCount(0);
   expect(await page.evaluate(() => window.__lagosMap!.selected())).toBeNull();
+
+  // The drawer (still open on a wide screen) lists each district's officials; a profile opens with its traits.
+  const officials = page.getByTestId("officials");
+  await officials.getByText("Lagos Island", { exact: true }).click();
+  const eze = officials.getByRole("article", { name: "Ngozi Eze" });
+  await expect(eze).toContainText("Area Commander");
+  await expect(eze).toContainText("Can't be bought");
+  await expect(eze).toContainText("Integrity88");
+  await expect(officials.getByRole("article", { name: "Rasaki Oduya" })).not.toContainText("Can't be bought");
+  await expect(officials.getByRole("article", { name: "Dele Martins" })).toBeHidden();
 });
 
 test("the wheel zooms in around the pointer; dragging then pans without selecting", async ({ page }) => {

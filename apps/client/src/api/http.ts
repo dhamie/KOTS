@@ -120,7 +120,7 @@ export const api = {
   inventory: (familyId: string) => request("GET", `/families/${familyId}/inventory`, Inventory),
 
   trades: (familyId: string, box: TradeBox) => request("GET", `/families/${familyId}/trades?box=${box}&limit=${box === "closed" ? 10 : 50}`, TradePage),
-  proposeTrade: (familyId: string, offer: OfferRequest) => request("POST", `/families/${familyId}/trades`, Trade, offer),
+  proposeTrade: (familyId: string, offer: OfferRequest, key: string) => request("POST", `/families/${familyId}/trades`, Trade, offer, { "idempotency-key": key }),
   acceptTrade: (id: string) => request("POST", `/trades/${id}/accept`, Trade, {}),
   declineTrade: (id: string) => request("POST", `/trades/${id}/decline`, Trade, {}),
   cancelTrade: (id: string) => request("POST", `/trades/${id}/cancel`, Trade, {}),
@@ -140,7 +140,7 @@ export const api = {
 
   openRoom: (tag: string) => request("POST", "/diplomacy/rooms", ChatChannel, { tag }),
   room: (roomId: string) => request("GET", `/diplomacy/rooms/${roomId}`, RoomState),
-  propose: (roomId: string, terms: ProposalTerms) => request("POST", `/diplomacy/rooms/${roomId}/proposals`, Proposal, { terms }),
+  propose: (roomId: string, terms: ProposalTerms, key: string) => request("POST", `/diplomacy/rooms/${roomId}/proposals`, Proposal, { terms }, { "idempotency-key": key }),
   signProposal: (id: string) => request("POST", `/proposals/${id}/sign`, Proposal, {}),
   declineProposal: (id: string) => request("POST", `/proposals/${id}/decline`, Proposal, {}),
   withdrawProposal: (id: string) => request("POST", `/proposals/${id}/withdraw`, Proposal, {}),

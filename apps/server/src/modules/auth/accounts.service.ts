@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { AppError, conflict, uniqueViolation } from "../../common/errors";
 import { DB, type Database } from "../../db/db";
 import { players, users } from "../../db/schema";
@@ -11,6 +11,18 @@ export interface PlayerSummary {
   id: string;
   handle: string;
   createdAt: Date;
+}
+
+/** Everything an operator sees about an account (npm run admin). */
+export interface AccountRecord {
+  playerId: string;
+  userId: string;
+  handle: string;
+  email: string;
+  status: string;
+  isModerator: boolean;
+  createdAt: Date;
+  lastActiveAt: Date;
 }
 
 /** Owns users, players and their credentials. Other modules look players up through here. */
@@ -64,6 +76,34 @@ export class AccountsService {
   async isModerator(playerId: string, db: DbOrTx = this.db): Promise<boolean> {
     const [row] = await db.select({ isModerator: players.isModerator }).from(players).where(eq(players.id, playerId));
     return row?.isModerator ?? false;
+  }
+
+  async accountByHandle(handle: string, db: DbOrTx = this.db): Promise<AccountRecord | undefined> {
+    const [row] = await db
+      .select({
+        playerId: players.id,
+        userId: users.id,
+        handle: players.handle,
+        email: users.email,
+        status: users.status,
+        isModerator: players.isModerator,
+        createdAt: players.createdAt,
+        lastActiveAt: players.lastActiveAt,
+      })
+      .from(players)
+      .innerJoin(users, eq(users.id, players.userId))
+      .where(eq(players.handle, handle));
+    return row;
+  }
+
+  /** Bans or unbans. Returns false, changing nothing, when the account is already in that state. */
+  async setStatus(db: DbOrTx, userId: string, status: "active" | "banned"): Promise<boolean> {
+    const rows = await db
+      .update(users)
+      .set({ status })
+      .where(and(eq(users.id, userId), ne(users.status, status)))
+      .returning({ id: users.id });
+    return rows.length > 0;
   }
 
   async findPlayerById(id: string, db: DbOrTx = this.db): Promise<PlayerSummary | undefined> {

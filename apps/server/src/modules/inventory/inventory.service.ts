@@ -24,6 +24,11 @@ export class InventoryService {
 
   async view(viewerId: string, familyId: string): Promise<Inventory> {
     await this.memberships.requireMemberOf(viewerId, familyId);
+    return this.contentsOf(familyId);
+  }
+
+  /** Authorisation is the caller's job. */
+  async contentsOf(familyId: string): Promise<Inventory> {
     const items = await this.db
       .select({ good: inventoryStacks.good, quantity: inventoryStacks.quantity })
       .from(inventoryStacks)

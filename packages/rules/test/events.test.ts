@@ -1,6 +1,6 @@
-import { DISTRICTS, EVENT_DEFS, EVENT_TYPES, EVENTS, MARKETS } from "@kots/content";
+import { DISTRICTS, EVENT_DEFS, EVENT_TYPES, EVENTS, MARKETS, OFFICIALS_TUNING, officialOf } from "@kots/content";
 import { describe, expect, it } from "vitest";
-import { eligibleTypes, eventScopeIds, planEvent, rollEvent } from "../src";
+import { eligibleTypes, eventPlaceWeight, eventScopeIds, planEvent, rollEvent } from "../src";
 
 const HOUR = 60 * 60 * 1000;
 const NOW = 1_800_000_000_000;
@@ -41,6 +41,29 @@ describe("planEvent", () => {
     expect(() => planEvent("street_festival", 1, "balogun")).toThrow(RangeError);
     expect(() => planEvent("fuel_scarcity", 1, "apapa")).toThrow(RangeError);
     expect(eventScopeIds("fuel_scarcity")).toEqual([]);
+  });
+
+  it("picks districts for swayed events in proportion to their officials' traits, and never rules one out", () => {
+    const many = Array.from({ length: 6000 }, (_, i) => i * 104729 + 3);
+    for (const type of ["police_sweep", "street_festival"] as const) {
+      const sway = EVENT_DEFS[type].swayedBy;
+      const weights = DISTRICTS.map((d) => eventPlaceWeight(type, d.slug));
+      const total = weights.reduce((s, w) => s + w, 0);
+      DISTRICTS.forEach((d, i) => {
+        const official = officialOf(d.slug, sway.office)!;
+        expect(weights[i]).toBe(OFFICIALS_TUNING.baseSway + sway.traits.reduce((s, t) => s + official.traits[t], 0));
+        const share = many.filter((seed) => planEvent(type, seed).scopeId === d.slug).length / many.length;
+        expect(share, `${type} in ${d.slug}`).toBeGreaterThan(0);
+        expect(Math.abs(share - weights[i]! / total), `${type} in ${d.slug}`).toBeLessThan(0.03);
+      });
+    }
+    // Lagos Island's commander is the most ambitious and the most upright, so sweeps land there most.
+    const sweeps = DISTRICTS.map((d) => eventPlaceWeight("police_sweep", d.slug));
+    expect(DISTRICTS[sweeps.indexOf(Math.max(...sweeps))]!.slug).toBe("lagos-island");
+  });
+
+  it("weighs markets equally (no official sways them)", () => {
+    for (const m of MARKETS) expect(eventPlaceWeight("port_congestion", m.territory)).toBe(1);
   });
 });
 

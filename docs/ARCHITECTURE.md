@@ -67,7 +67,7 @@ This is the approved Phase 0 architecture for the game described in `docs/BRIEF.
 > - Rooms are `player:{id}`, `family:{id}` and `public`. Direct messages go to both players' rooms, so there are no per-channel rooms to keep in sync.
 > - `chat_channel_members` isn't needed: family channel access is checked against the membership on every request, and a direct channel stores its two players (`player_a < player_b`).
 > - Notifications are derived from activity entries (`NotificationsService.fromActivity`, called by `ActivityService.record`) in the same transaction, so they are exactly once wherever activity is. A family isn't notified of what its own members did. No `priority` or `ref` columns yet: a `target` (which panel to open) is enough for now.
-> - Moderators are players with `is_moderator`, set by `npm run mod:grant <handle>`. Full admin tools are Phase 11. Every moderator action, and every grant, is in `moderation_actions`.
+> - Moderators are players with `is_moderator`, set by `npm run mod:grant <handle>`. Basic admin tools arrived in Phase 8c (`docs/ADMIN.md`); full ones are Phase 11. Every moderator action, and every grant, is in `moderation_actions`.
 > - The Chat button replaces Districts in the toolbar; the district list opens from a button on the map, keeping four toolbar buttons on a phone.
 
 > **Phase 6b decisions (2026-10-11):** see `docs/CHAT.md`.
@@ -84,6 +84,20 @@ This is the approved Phase 0 architecture for the game described in `docs/BRIEF.
 > - Rounds are resolved by a sweep every minute rather than one job per round: simpler, retry-safe, and within a minute of schedule. Orders can be changed until the round resolves (upsert), rather than being unique-once.
 > - New-family protection is computed from `founded_at` (3 days), with no `protection_until` column.
 > - Lock order gains battles: families → invitations → memberships → trades → proposals → battles → territories → henchmen → inventory → market stock → accounts.
+
+> **Phase 8b decisions (2026-10-14):** see `docs/OFFICIALS.md`.
+> - Officials are static content (`packages/content/src/officials.ts`): no table, no API. The client reads them from the content package, as it does the map. A table comes with influence, after the MVP.
+> - Their only effect is to weight which district a rolled festival or police sweep hits (`swayedBy` in `EVENT_DEFS`). "Can't be bought" is shown but not used.
+
+> **Phase 8c decisions (2026-10-14):** see `docs/ADMIN.md`.
+> - Admin tools are a command (`npm run admin`), not web screens: no admin login or endpoints to secure yet. The web admin is Phase 11.
+> - `AdminService` owns no tables and runs inside its own Nest application context (`AdminModule`), through the same services as the api. Every change is audited in `moderation_actions` in the same transaction.
+> - Treasury adjustments use ledger kind `admin_adjust` against a new `admin` system account (migration 0011). A ban deletes the account's sessions and drops its sockets; family membership is untouched.
+> - The client treats a server-side socket disconnect as a resync, so a page whose session was ended elsewhere finds it gone and returns to the login screen.
+
+> **Phase 9 decisions (2026-10-14):** see `docs/RELIABILITY.md`.
+> - 9a: every route must have a row in the access table in `test/access.test.ts`, checked against the routes the api actually serves.
+> - 9b: trade offers and diplomacy proposals require an `Idempotency-Key`, like market orders (migration 0012). The client keeps a form's key until the server answers definitely, so a retry after a lost response reuses it.
 
 ## 2. Repository structure (start small, grow on demand)
 ```
@@ -262,9 +276,9 @@ Each phase needs explicit approval before it starts, and each one ends with a ch
 | 5 | Goods, inventory, NPC market, player-to-player trades, concurrency test suite. Split: **5a** goods, inventory, storage, NPC market; **5b** trades and the concurrency suite | done (2026-10-11) |
 | 6 | Chat (family, public, direct), diplomacy rooms, structured proposals, notifications, basic moderation. Split: **6a** live updates, chat, notifications, moderation; **6b** diplomacy rooms and proposals | done (2026-10-11) |
 | 7 | Territory battles: declaration, preparation, orders, scheduled round resolution, report and replay. Split: **7a** rules and server; **7b** screens | done (2026-10-11): 7a rules and server, 7b screens |
-| 8 | Event framework and first event types, first NPC influence profiles. Split: **8a** event framework and four event types; **8b** NPC officials and **8c** basic admin tools, each still to be proposed | in progress: 8a built (2026-10-11) |
-| — | **MVP complete** at the end of Phase 8 | |
-| 9 | Multiplayer reliability: concurrency, reconnects, retries, access control, recovery | — |
+| 8 | Event framework and first event types, first NPC influence profiles. Split: **8a** event framework and four event types; **8b** NPC officials and **8c** basic admin tools, each still to be proposed | done (2026-10-14): 8a events, 8b officials, 8c admin tools |
+| — | **MVP complete** at the end of Phase 8 | done (2026-10-14) |
+| 9 | Multiplayer reliability: concurrency, reconnects, retries, access control, recovery. Split: **9a** access control; **9b** concurrency and retries; **9c** recovery | in progress: 9a done (signed off 2026-10-14); 9b built, awaiting sign-off |
 | 10 | Performance and scaling: profiling, k6 load tests, optimisation, deployment design, hosting choice | — |
 | 11 | Beta operations: admin and moderation, monitoring, backups and restore drills, CI/CD, balancing tools | — |
 

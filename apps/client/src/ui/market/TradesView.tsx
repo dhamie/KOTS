@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { api } from "../../api/http";
 import { naira, when } from "../format";
 import { useAction } from "../useAction";
+import { useRequestKey } from "../useRequestKey";
 
 const describe = (items: TradeItem[]) =>
   items.length === 0 ? "nothing" : items.map((i) => ("cash" in i ? naira(i.cash) : `${i.quantity} ${goodDef(i.good).label.toLowerCase()}`)).join(", ");
@@ -31,6 +32,7 @@ export function TradesView(props: { me: MeResponse; revision: number; onChanged:
   const [outgoing, setOutgoing] = useState<Trade[]>([]);
   const [closed, setClosed] = useState<Trade[]>([]);
   const { busy, error, run } = useAction();
+  const keyed = useRequestKey();
 
   const load = useCallback(
     () =>
@@ -116,7 +118,7 @@ export function TradesView(props: { me: MeResponse; revision: number; onChanged:
         ))}
       </ul>
 
-      {canPropose && <NewOffer familyId={family.id} busy={busy} onSubmit={(offer) => act(() => api.proposeTrade(family.id, offer))} />}
+      {canPropose && <NewOffer familyId={family.id} busy={busy} onSubmit={(offer) => act(() => keyed((key) => api.proposeTrade(family.id, offer, key)))} />}
 
       {closed.length > 0 && (
         <details>

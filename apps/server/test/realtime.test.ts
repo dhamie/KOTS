@@ -5,7 +5,7 @@ import { createDb, createPool } from "../src/db/db";
 import { RealtimeService, rooms } from "../src/modules/realtime/realtime.service";
 import { TradesService } from "../src/modules/trades/trades.service";
 import { economyHelpers } from "./economy-helpers";
-import { newPlayer, resetTestDatabase, startApi, TEST_DATABASE_URL, TestClock, type Client, type TestApi } from "./helpers";
+import { newPlayer, resetTestDatabase, startApi, TEST_DATABASE_URL, TestClock, type Client, type TestApi, keyed } from "./helpers";
 import { closeAllSockets, connect, settle } from "./socket-helpers";
 
 let api: TestApi;
@@ -129,7 +129,7 @@ describe("delivery", () => {
     const a = await family();
     const b = await family();
     await Promise.all([ageForTrading(a.id), ageForTrading(b.id)]);
-    expect((await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] })).status).toBe(201);
+    expect((await a.don.client.post(`/families/${a.id}/trades`, { to: b.tag, gives: [{ cash: 100 }], wants: [] }, keyed())).status).toBe(201);
     const live = await connect(api.base, a.don.client);
 
     // A publish from a separate connection pool, as the worker process makes.

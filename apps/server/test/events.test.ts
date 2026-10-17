@@ -103,6 +103,7 @@ describe("a street festival", () => {
 
     const [story] = await news(c.don.client);
     expect(story).toMatchObject({ id, type: "street_festival", scope: "district", scopeId: "apapa", state: "active", headline: "Street festival in Apapa" });
+    expect(story!.body).toMatch(/^Area Chairman Dele Martins declared a celebration\./);
   });
 
   it("pays no one when nobody holds territory there", async () => {

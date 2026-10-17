@@ -29,6 +29,14 @@ npm run mod:revoke <handle>
 ```
 Moderators see a Reports tab in Chat and can delete any message. Set `DATABASE_URL` to target another database.
 
+## Admin tools
+```bash
+npm run admin -- inspect family <tag>                 # also: inspect player <handle>
+npm run admin -- adjust <tag> +5000 "<reason>"         # credit or debit a treasury (audited)
+npm run admin -- ban <handle> "<reason>"               # also: unban <handle>
+```
+See `docs/ADMIN.md`. Set `DATABASE_URL` to target another database.
+
 ## City events
 ```bash
 npm run event:trigger street_festival lagos-island   # start a city event now (audited); see docs/EVENTS.md
@@ -46,7 +54,7 @@ npm run event:trigger street_festival lagos-island   # start a city event now (a
 
 When a browser test fails, look in `test-results/`: the run logs every API request in `e2e-api.log` (on arrival, and when done or aborted) and every proxied one in `e2e-web.log` (`LOG_REQUESTS=1`). Each failed test also keeps a Playwright trace. A request the browser sent that has no line in either log never reached the proxy.
 
-The Vite proxy keeps connections to the API open (`agent` in `apps/client/vite.config.ts`). Without it, the proxy closes every connection and the browser opens a new one for each request. The browser container reaches this machine through Docker Desktop's network forwarding, which occasionally loses a new connection, and those lost connections were what made the browser tests time out. Don't run heavy commands (tsc, eslint) during a browser run, and don't let the machine sleep: a test running across a sleep fails on its 2-minute limit.
+The Vite proxy drops the API's `Connection: close` from its replies (`configureProxy` in `apps/client/vite.config.ts`), so the browser keeps its connection to the proxy open. Without that, the browser opens a new connection for each request. (The proxy still opens a fresh connection to the API each time: a keep-alive agent there reused connections the API had just closed and returned 502s.) The browser container reaches this machine through Docker Desktop's network forwarding, which occasionally loses a new connection, and those lost connections were what made the browser tests time out. Don't run heavy commands (tsc, eslint) during a browser run, and don't let the machine sleep: a test running across a sleep fails on its 2-minute limit.
 
 ## Database changes
 1. Edit `apps/server/src/db/schema.ts`.

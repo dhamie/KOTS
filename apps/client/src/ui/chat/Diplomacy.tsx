@@ -6,6 +6,7 @@ import { api } from "../../api/http";
 import { onLive } from "../../api/live";
 import { naira, when } from "../format";
 import { useAction } from "../useAction";
+import { useRequestKey } from "../useRequestKey";
 import type { ChatState } from "./useChat";
 
 type MyFamily = NonNullable<MeResponse["family"]>;
@@ -68,6 +69,7 @@ export function RoomProposals(props: { room: ChatChannel; family: MyFamily }) {
   const { room, family } = props;
   const [state, setState] = useState<RoomState | null>(null);
   const { busy, error, run } = useAction();
+  const keyed = useRequestKey();
   const canSign = checkFamilyAction(family.role, { kind: "diplomacy_sign" }).ok;
   const canPropose = checkFamilyAction(family.role, { kind: "diplomacy_propose" }).ok;
 
@@ -129,7 +131,7 @@ export function RoomProposals(props: { room: ChatChannel; family: MyFamily }) {
           );
         })}
       </ul>
-      {canPropose && <NewProposal room={room} family={family} busy={busy} onSubmit={(terms) => act(() => api.propose(room.id, terms))} />}
+      {canPropose && <NewProposal room={room} family={family} busy={busy} onSubmit={(terms) => act(() => keyed((key) => api.propose(room.id, terms, key)))} />}
       {closed.length > 0 && (
         <details>
           <summary className="small">Recent proposals</summary>

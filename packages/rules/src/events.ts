@@ -1,4 +1,4 @@
-import { DISTRICTS, EVENT_DEFS, EVENT_TYPES, EVENTS, MARKETS, type EventType, type GoodKey } from "@kots/content";
+import { DISTRICTS, EVENT_DEFS, EVENT_TYPES, EVENTS, MARKETS, OFFICIALS_TUNING, officialOf, type EventType, type GoodKey } from "@kots/content";
 import { createRng, nextInt, nextUint32, type RngState } from "./rng";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -27,17 +27,35 @@ export function eventScopeIds(type: EventType): string[] {
 }
 
 const pick = <T>(rng: RngState, list: readonly T[]): T => list[nextInt(rng, 0, list.length - 1)]!;
+
+/**
+ * How likely `place` is, relative to the other places, when an event of this type is rolled. Equal, except for
+ * events swayed by an official (EVENT_DEFS `swayedBy`): base sway plus the named traits of that district's official.
+ */
+export function eventPlaceWeight(type: EventType, place: string): number {
+  const def = EVENT_DEFS[type];
+  if (!("swayedBy" in def)) return 1;
+  const official = officialOf(place, def.swayedBy.office);
+  return OFFICIALS_TUNING.baseSway + (official ? def.swayedBy.traits.reduce((sum, t) => sum + official.traits[t], 0) : 0);
+}
+
+function pickPlace(rng: RngState, type: EventType, ids: readonly string[]): string {
+  const weights = ids.map((id) => eventPlaceWeight(type, id));
+  let roll = nextInt(rng, 0, weights.reduce((s, w) => s + w, 0) - 1);
+  return ids.find((_, i) => (roll -= weights[i]!) < 0)!;
+}
+
 const inRange = (rng: RngState, [min, max]: readonly [number, number]) => nextInt(rng, min, max);
 
 /**
  * Decides where an event lands and how strong it is. `scopeId` fixes the place (it must be one of
- * eventScopeIds(type)); otherwise one is picked. Same type, seed and scope, same event.
+ * eventScopeIds(type)); otherwise one is picked by eventPlaceWeight. Same type, seed and scope, same event.
  */
 export function planEvent(type: EventType, seed: number, scopeId?: string): PlannedEvent {
   const rng = createRng(seed);
   const ids = eventScopeIds(type);
   if (scopeId !== undefined && !ids.includes(scopeId)) throw new RangeError(`${type} can't cover ${scopeId}`);
-  const place = scopeId ?? (ids.length > 0 ? pick(rng, ids) : null);
+  const place = scopeId ?? (ids.length > 0 ? pickPlace(rng, type, ids) : null);
   switch (type) {
     case "port_congestion": {
       const def = EVENT_DEFS.port_congestion;

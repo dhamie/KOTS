@@ -5,6 +5,7 @@ import type { ChatChannel, Proposal, RoomState } from "@kots/shared";
 import { and, asc, count, desc, eq, gt, inArray, lte, ne, or } from "drizzle-orm";
 import { CLOCK, type Clock } from "../../common/clock";
 import { AppError, badRequest, conflict, forbidden, notFound } from "../../common/errors";
+import { canonicalJson } from "../../common/idempotency-key";
 import { DB, type Database } from "../../db/db";
 import { ceasefires, players, proposals, proposalSignatures } from "../../db/schema";
 import type { DbOrTx, Tx } from "../../db/tx";
@@ -102,7 +103,8 @@ export class DiplomacyService {
   // ── Writes ───────────────────────────────────────────────────────────────
 
   /** Makes a proposal to the other family in the room. If the proposer may sign, it counts as their family's signature. */
-  async propose(actorId: string, roomId: string, terms: ProposalTerms): Promise<Proposal> {
+  /** A retry with the same Idempotency-Key returns the proposal it made, so a lost response can't make a second one. */
+  async propose(actorId: string, roomId: string, requestKey: string, terms: ProposalTerms): Promise<Proposal> {
     const check = checkProposalTerms(terms);
     if (!check.ok) throw badRequest(TERMS_MESSAGE[check.reason]);
     const now = this.clock.now();
@@ -110,6 +112,15 @@ export class DiplomacyService {
     const id = await this.db.transaction(async (tx) => {
       const actor = await this.memberships.lockActing(tx, actorId, { kind: "diplomacy_propose" });
       const room = await this.chat.requireRoom(tx, actorId, roomId);
+      // The family row is locked, so a retry with the same key waits here and then finds the first proposal.
+      const [prior] = await tx
+        .select({ id: proposals.id, channelId: proposals.channelId, terms: proposals.terms })
+        .from(proposals)
+        .where(and(eq(proposals.fromFamilyId, actor.familyId), eq(proposals.requestKey, requestKey)));
+      if (prior) {
+        if (prior.channelId !== room.id || canonicalJson(prior.terms) !== canonicalJson(terms)) throw badRequest("That Idempotency-Key was already used for a different proposal.");
+        return prior.id;
+      }
       const otherId = room.familyA === actor.familyId ? room.familyB : room.familyA;
       const fams = await this.memberships.familiesById([actor.familyId, otherId], tx);
       const [own, other] = [fams.get(actor.familyId)!, fams.get(otherId)!];
@@ -140,6 +151,7 @@ export class DiplomacyService {
           createdBy: actorId,
           createdAt: now,
           expiresAt: new Date(now.getTime() + PROPOSAL_TTL_MS),
+          requestKey,
         })
         .returning({ id: proposals.id });
       if (checkFamilyAction(actor.role, { kind: "diplomacy_sign" }).ok) {

@@ -7,3 +7,4 @@ export * from "./chat";
 export * from "./diplomacy";
 export * from "./battles";
 export * from "./events";
+export * from "./officials";

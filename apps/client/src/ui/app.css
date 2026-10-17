@@ -359,17 +359,20 @@ body,
   font-size: 11px;
 }
 
-.candidate .attributes div {
+.candidate .attributes div,
+.official .attributes div {
   display: grid;
   grid-template-columns: 70px 1fr;
   align-items: center;
 }
 
-.candidate .attributes dt {
+.candidate .attributes dt,
+.official .attributes dt {
   color: #9c8f7a;
 }
 
-.candidate .attributes dd {
+.candidate .attributes dd,
+.official .attributes dd {
   position: relative;
   margin: 0;
   height: 10px;
@@ -377,14 +380,16 @@ body,
   border-radius: 2px;
 }
 
-.candidate .attributes .bar {
+.candidate .attributes .bar,
+.official .attributes .bar {
   position: absolute;
   inset: 0 auto 0 0;
   background: #8a6d3b;
   border-radius: 2px;
 }
 
-.candidate .attributes .value {
+.candidate .attributes .value,
+.official .attributes .value {
   position: absolute;
   right: 3px;
   top: -2px;
@@ -764,4 +769,42 @@ body,
   padding: 6px 8px;
   border-left: 3px solid #c9a96e;
   background: rgba(201, 169, 110, 0.08);
+}
+
+/* Phase 8b: officials */
+.officials details {
+  margin-bottom: 4px;
+}
+
+.officials summary {
+  cursor: pointer;
+}
+
+.official {
+  padding: 6px 8px;
+  margin-top: 4px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.official p {
+  margin: 2px 0 4px;
+}
+
+.official .attributes {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.official .attributes div {
+  grid-template-columns: 80px 1fr;
+}
+
+.unbuyable {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid #c9a96e;
+  border-radius: 2px;
+  color: #c9a96e;
 }

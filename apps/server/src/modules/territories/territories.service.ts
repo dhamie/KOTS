@@ -88,6 +88,11 @@ export class TerritoriesService {
 
   async holdings(viewerId: string, familyId: string): Promise<FamilyHoldings> {
     await this.memberships.requireMemberOf(viewerId, familyId);
+    return this.holdingsOf(familyId);
+  }
+
+  /** Authorisation is the caller's job. */
+  async holdingsOf(familyId: string): Promise<FamilyHoldings> {
     const rows = await this.db.select().from(territories).where(eq(territories.ownerFamilyId, familyId)).orderBy(asc(territories.slug));
     const list = rows.map((t) => ({
       slug: t.slug,

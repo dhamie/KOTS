@@ -6,8 +6,8 @@ import { DB, type Database } from "../../db/db";
 import { currencyAccounts, ledgerEntries, ledgerTransactions, type LedgerKind } from "../../db/schema";
 import type { DbOrTx, Tx } from "../../db/tx";
 
-/** Where money comes from and goes to. Created by migrations 0003, 0004, 0005, 0009 and 0010. */
-export const SYSTEM_ACCOUNTS = ["grants", "territory_income", "territory_upkeep", "claim_fees", "disbanded", "recruitment", "wages", "market", "battle_fees", "events"] as const;
+/** Where money comes from and goes to. Created by migrations 0003, 0004, 0005, 0009, 0010 and 0011. */
+export const SYSTEM_ACCOUNTS = ["grants", "territory_income", "territory_upkeep", "claim_fees", "disbanded", "recruitment", "wages", "market", "battle_fees", "events", "admin"] as const;
 export type SystemAccount = (typeof SYSTEM_ACCOUNTS)[number];
 
 export interface PostingLine {

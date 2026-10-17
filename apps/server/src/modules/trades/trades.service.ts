@@ -5,6 +5,7 @@ import type { OfferRequest, Trade, TradeBox, TradePage } from "@kots/shared";
 import { and, asc, count, desc, eq, gt, inArray, lt, lte, ne, or } from "drizzle-orm";
 import { CLOCK, type Clock } from "../../common/clock";
 import { AppError, badRequest, conflict, forbidden, notFound } from "../../common/errors";
+import { canonicalJson } from "../../common/idempotency-key";
 import { DB, type Database } from "../../db/db";
 import { tradeLines, trades, type TradeStatus } from "../../db/schema";
 import type { DbOrTx, Tx } from "../../db/tx";
@@ -67,7 +68,8 @@ export class TradesService {
 
   // ── Writes ───────────────────────────────────────────────────────────────
 
-  async propose(actorId: string, familyId: string, req: OfferRequest): Promise<Trade> {
+  /** A retry with the same Idempotency-Key returns the offer it made, so a lost response can't make a second one. */
+  async propose(actorId: string, familyId: string, requestKey: string, req: OfferRequest): Promise<Trade> {
     const terms = checkTerms(req);
     if (!terms.ok) throw badRequest(TERMS_MESSAGE[terms.reason]);
     const now = this.clock.now();
@@ -75,6 +77,17 @@ export class TradesService {
     const id = await this.db.transaction(async (tx) => {
       const actor = await this.memberships.lockActing(tx, actorId, { kind: "propose_trade" });
       if (actor.familyId !== familyId) throw forbidden("You are not a member of this family.");
+      // The family row is locked, so a retry with the same key waits here and then finds the first offer.
+      const [prior] = await tx
+        .select({ id: trades.id, toFamilyId: trades.toFamilyId })
+        .from(trades)
+        .where(and(eq(trades.fromFamilyId, familyId), eq(trades.requestKey, requestKey)));
+      if (prior) {
+        const [to] = (await this.memberships.familiesById([prior.toFamilyId], tx)).values();
+        const sameLines = canonicalJson(await this.linesOf(tx, prior.id)) === canonicalJson({ gives: req.gives, wants: req.wants });
+        if (to!.tag.toLowerCase() !== req.to.toLowerCase() || !sameLines) throw badRequest("That Idempotency-Key was already used for a different offer.");
+        return prior.id;
+      }
       const target = await this.memberships.familyByTag(req.to, tx);
       if (!target) throw notFound("Family");
       if (target.id === familyId) throw badRequest("A family can't trade with itself.");
@@ -91,7 +104,7 @@ export class TradesService {
 
       const [trade] = await tx
         .insert(trades)
-        .values({ fromFamilyId: familyId, toFamilyId: target.id, createdBy: actorId, createdAt: now, expiresAt: new Date(now.getTime() + OFFER_TTL_MS) })
+        .values({ fromFamilyId: familyId, toFamilyId: target.id, createdBy: actorId, createdAt: now, expiresAt: new Date(now.getTime() + OFFER_TTL_MS), requestKey })
         .returning({ id: trades.id });
       const lines = [...req.gives.map((i) => ({ side: "gives" as const, i })), ...req.wants.map((i) => ({ side: "wants" as const, i }))];
       await tx.insert(tradeLines).values(

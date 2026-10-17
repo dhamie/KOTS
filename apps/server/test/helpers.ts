@@ -110,6 +110,9 @@ export class Client {
 
 let counter = 0;
 
+/** A fresh Idempotency-Key header, for requests that need one (market orders, trade offers, proposals). */
+export const keyed = () => ({ "idempotency-key": `test-${Date.now().toString(36)}-${++counter}-${Math.random().toString(36).slice(2, 10)}` });
+
 /** Registers a fresh player and returns a logged-in client plus the player's id. */
 export async function newPlayer(base: string, handle = `p${Date.now() % 1e6}_${++counter}`): Promise<{ client: Client; id: string; handle: string }> {
   const client = new Client(base);

@@ -23,7 +23,7 @@ How city events work and where to tune them. Every event is fictional and abstra
 Each stays in the news as current for 6–8 hours, then as ended for a day.
 
 ## How an event runs
-1. **The hourly roll** (`events.generate`). With a 25% chance, and while fewer than 2 events are current, `rollEvent` picks a type whose cooldown has passed (by weight), then `planEvent` picks the place and the effect size. The roll's seed comes from the server. The row is written with the dedupe key `generate:{hour}`, so a retried or overlapping run can't add a second event in the same hour. (A retry after a crash rolls again with a new seed: an hour that rolled nothing may still get an event. At most one either way.)
+1. **The hourly roll** (`events.generate`). With a 25% chance, and while fewer than 2 events are current, `rollEvent` picks a type whose cooldown has passed (by weight), then `planEvent` picks the place (for festivals and sweeps, weighted by the district's officials: see docs/OFFICIALS.md) and the effect size. The roll's seed comes from the server. The row is written with the dedupe key `generate:{hour}`, so a retried or overlapping run can't add a second event in the same hour. (A retry after a crash rolls again with a new seed: an hour that rolled nothing may still get an event. At most one either way.)
 2. **Starting** (`events.sweep`, every minute). A due event moves `scheduled → active` through a conditional update. Its effect is applied in the same transaction, through the services that own the data: MarketService for stock, LedgerService for payments (key `event:{event}:{family}`), HenchmenService for morale, ActivityService for family history and notifications. A second sweep finds nothing to start, so nothing is applied twice.
 3. **Ending.** When `expires_at` passes, the sweep moves it `active → expired`. It stays in the news for `EVENTS.newsHours`.
 4. **Live updates.** Starting and ending an event sends `events.changed` to every connected browser, which reloads the news and the market prices. Families an event touched also get `family.changed` and notifications: the festival tells members who can see the treasury; the police sweep tells every member.
@@ -50,5 +50,5 @@ It schedules the event to start now; the worker's sweep starts it within a minut
 ## Limits and follow-ups
 - Effects are one-off. There are no lasting modifiers (for example, "income +20% for 6 hours"); that would need every income and price calculation to consult current events.
 - The numbers are first guesses. Festivals add money to the economy; police sweeps only cost morale.
-- NPC officials (Phase 8b) will shape which events hit which district.
+- NPC officials (Phase 8b) sway which district a rolled festival or police sweep hits, and are named in those stories. See docs/OFFICIALS.md.
 - The data model in ARCHITECTURE.md lists more scopes, a `resolved` state and a `severity` column. Only what these four types need was built: scopes `market|district|city`, states `scheduled|active|expired`, and the effect size in `payload`.

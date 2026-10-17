@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { CITY, EVENT_DEFS, EVENT_TYPES, EVENTS, MARKETS } from "@kots/content";
+import { CITY, EVENT_DEFS, EVENT_TYPES, EVENTS, MARKETS, OFFICE_DEFS, officialOf, type Office } from "@kots/content";
 import { eventDurationMs, goodDef, rollEvent, type PlannedEvent } from "@kots/rules";
 import type { WorldEvent } from "@kots/shared";
 import { and, asc, count, desc, eq, gt, inArray, lte } from "drizzle-orm";
@@ -20,6 +20,11 @@ type Row = typeof worldEvents.$inferSelect;
 const HOUR_MS = 60 * 60 * 1000;
 const placeName = (slug: string) => CITY.territories.get(slug)?.name ?? slug;
 const districtName = (slug: string) => CITY.districts.get(slug)?.name ?? slug;
+/** "Area Commander Ngozi Eze", for event stories. */
+const officialTitle = (district: string, office: Office) => {
+  const official = officialOf(district, office);
+  return official ? `${OFFICE_DEFS[office].label} ${official.name}` : OFFICE_DEFS[office].label;
+};
 /** Cooldowns reach back at most this far, so the roll only needs events that started since. */
 const LOOKBACK_MS = Math.max(...EVENT_TYPES.map((t) => EVENT_DEFS[t].cooldownHours)) * HOUR_MS;
 
@@ -52,12 +57,12 @@ function story(plan: PlannedEvent): { headline: string; body: string } {
     case "street_festival":
       return {
         headline: `Street festival in ${districtName(plan.scopeId)}`,
-        body: `The district is celebrating. Every family holding territory there took ${plan.incomeDays === 1 ? "a day's" : `${plan.incomeDays} days'`} income per territory.`,
+        body: `${officialTitle(plan.scopeId, "area_chairman")} declared a celebration. Every family holding territory there took ${plan.incomeDays === 1 ? "a day's" : `${plan.incomeDays} days'`} income per territory.`,
       };
     case "police_sweep":
       return {
         headline: `Police sweep in ${districtName(plan.scopeId)}`,
-        body: `A sweep through the district rattled the families' guards there: each lost ${plan.moraleLoss} morale.`,
+        body: `${officialTitle(plan.scopeId, "area_commander")} ordered a sweep through the district. It rattled the families' guards there: each lost ${plan.moraleLoss} morale.`,
       };
   }
 }

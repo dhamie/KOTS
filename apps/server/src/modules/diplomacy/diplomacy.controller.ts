@@ -1,5 +1,6 @@
-import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Headers, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import { OpenRoomRequest, ProposeRequest } from "@kots/shared";
+import { idempotencyKey } from "../../common/idempotency-key";
 import { UuidParam } from "../../common/uuid-param.pipe";
 import { ZodPipe } from "../../common/zod.pipe";
 import { Auth, AuthGuard } from "../auth/auth.guard";
@@ -27,8 +28,13 @@ export class DiplomacyController {
   }
 
   @Post("diplomacy/rooms/:roomId/proposals")
-  propose(@Auth() auth: AuthContext, @Param("roomId", RoomId) roomId: string, @Body(new ZodPipe(ProposeRequest)) body: ProposeRequest) {
-    return this.diplomacy.propose(auth.playerId, roomId, body.terms);
+  propose(
+    @Auth() auth: AuthContext,
+    @Param("roomId", RoomId) roomId: string,
+    @Headers("idempotency-key") key: string | undefined,
+    @Body(new ZodPipe(ProposeRequest)) body: ProposeRequest,
+  ) {
+    return this.diplomacy.propose(auth.playerId, roomId, idempotencyKey(key, "proposal"), body.terms);
   }
 
   @Post("proposals/:proposalId/sign")

@@ -6,8 +6,9 @@ import { mapBus } from "../../map/bus";
 import { KIND_STYLE } from "../../map/palette";
 import { useCityNews } from "../events/useCityNews";
 import { when } from "../format";
+import { OfficialsList } from "./OfficialsList";
 
-/** District list (jump to a district), the city news and marker filters. */
+/** District list (jump to a district), the city news, the officials and marker filters. */
 export function DistrictNav({ onNavigate }: { onNavigate: () => void }) {
   const [summaries, setSummaries] = useState<Map<string, DistrictSummary>>(new Map());
   const [kinds, setKinds] = useState<ReadonlySet<TerritoryKind>>(new Set(TERRITORY_KINDS));
@@ -69,6 +70,8 @@ export function DistrictNav({ onNavigate }: { onNavigate: () => void }) {
           ))}
         </ul>
       )}
+      <h3>Officials</h3>
+      <OfficialsList />
       <h3>Show markers</h3>
       <div className="filters">
         {TERRITORY_KINDS.map((k) => (

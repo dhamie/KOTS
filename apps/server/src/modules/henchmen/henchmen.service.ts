@@ -60,6 +60,11 @@ export class HenchmenService {
 
   async list(viewerId: string, familyId: string): Promise<Henchman[]> {
     await this.memberships.requireMemberOf(viewerId, familyId);
+    return this.activeOf(familyId);
+  }
+
+  /** A family's active henchmen. Authorisation is the caller's job. */
+  async activeOf(familyId: string): Promise<Henchman[]> {
     const rows = (await this.db
       .select()
       .from(henchmen)

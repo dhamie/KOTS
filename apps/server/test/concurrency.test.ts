@@ -8,7 +8,7 @@ import { seedMap, seedMarkets } from "../src/db/seed";
 import { MarketService } from "../src/modules/market/market.service";
 import { TradesService } from "../src/modules/trades/trades.service";
 import { economyHelpers } from "./economy-helpers";
-import { resetTestDatabase, startApi, TestClock, type TestApi } from "./helpers";
+import { resetTestDatabase, startApi, TestClock, type TestApi, keyed } from "./helpers";
 
 /**
  * Trades and market orders fired at the same moment against real Postgres. After every test the shared checks
@@ -49,7 +49,7 @@ const order = (c: Client, side: "buy" | "sell", good: GoodKey, quantity: number,
 const held = async (c: Client, familyId: string, good: GoodKey) =>
   Inventory.parse((await c.get(`/families/${familyId}/inventory`)).body).items.find((i) => i.good === good)?.quantity ?? 0;
 const offer = async (from: Fam, to: Fam, gives: unknown[], wants: unknown[]) => {
-  const res = await from.don.client.post(`/families/${from.id}/trades`, { to: to.tag, gives, wants });
+  const res = await from.don.client.post(`/families/${from.id}/trades`, { to: to.tag, gives, wants }, keyed());
   expect(res.status).toBe(201);
   return res.body.id as string;
 };
@@ -159,7 +159,7 @@ describe("mixed load", () => {
       const to = pick(fams.filter((f) => f !== from));
       const gives = nextInt(rng, 0, 1) ? [{ good: good(), quantity: nextInt(rng, 1, 3) }] : [{ cash: nextInt(rng, 100, 2000) }];
       const wants = nextInt(rng, 0, 1) ? [{ good: good(), quantity: nextInt(rng, 1, 3) }] : [];
-      return from.don.client.post(`/families/${from.id}/trades`, { to: to.tag, gives, wants });
+      return from.don.client.post(`/families/${from.id}/trades`, { to: to.tag, gives, wants }, keyed());
     };
 
     // Wave 1: stock up and make offers.

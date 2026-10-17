@@ -231,7 +231,7 @@ export const currencyAccounts = pgTable(
   ],
 );
 
-export const LEDGER_KINDS = ["grant", "territory_claim", "upkeep", "disband", "recruitment", "wage", "purchase", "sale", "trade", "transfer", "battle", "event"] as const;
+export const LEDGER_KINDS = ["grant", "territory_claim", "upkeep", "disband", "recruitment", "wage", "purchase", "sale", "trade", "transfer", "battle", "event", "admin_adjust"] as const;
 export type LedgerKind = (typeof LEDGER_KINDS)[number];
 
 export const ledgerTransactions = pgTable(
@@ -434,8 +434,11 @@ export const trades = pgTable(
     createdAt: createdAt(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     closedAt: timestamp("closed_at", { withTimezone: true }),
+    /** The client's Idempotency-Key header (Phase 9b); null on offers made before it. */
+    requestKey: text("request_key"),
   },
   (t) => [
+    uniqueIndex("trades_request_unique").on(t.fromFamilyId, t.requestKey),
     index("trades_from_idx").on(t.fromFamilyId, t.id.desc()),
     index("trades_to_idx").on(t.toFamilyId, t.id.desc()),
     index("trades_expiry_idx").on(t.expiresAt).where(sql`${t.status} = 'open'`),
@@ -590,7 +593,7 @@ export const messageReports = pgTable(
   ],
 );
 
-export const MODERATION_ACTIONS = ["grant_moderator", "revoke_moderator", "delete_message", "dismiss_report", "trigger_event"] as const;
+export const MODERATION_ACTIONS = ["grant_moderator", "revoke_moderator", "delete_message", "dismiss_report", "trigger_event", "ban_player", "unban_player", "adjust_treasury"] as const;
 
 /** Append-only audit log of moderator actions. `moderator_id` is null for actions run from the command line. */
 export const moderationActions = pgTable(
@@ -657,8 +660,11 @@ export const proposals = pgTable(
     createdAt: createdAt(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     closedAt: timestamp("closed_at", { withTimezone: true }),
+    /** The client's Idempotency-Key header (Phase 9b); null on proposals made before it. */
+    requestKey: text("request_key"),
   },
   (t) => [
+    uniqueIndex("proposals_request_unique").on(t.fromFamilyId, t.requestKey),
     index("proposals_channel_idx").on(t.channelId, t.id.desc()),
     index("proposals_expiry_idx").on(t.expiresAt).where(sql`${t.status} = 'open'`),
     check("proposals_kind_check", sql`${t.kind} in (${sqlList(PROPOSAL_KINDS)})`),

@@ -7,7 +7,7 @@ import { seedMap } from "../src/db/seed";
 import { BattlesService } from "../src/modules/battles/battles.service";
 import { TerritoriesService } from "../src/modules/territories/territories.service";
 import { economyHelpers } from "./economy-helpers";
-import { newPlayer, resetTestDatabase, startApi, TestClock, type Client, type TestApi } from "./helpers";
+import { newPlayer, resetTestDatabase, startApi, TestClock, type Client, type TestApi, keyed } from "./helpers";
 
 let api: TestApi;
 const clock = new TestClock();
@@ -170,7 +170,7 @@ describe("declaring", () => {
     const f = await front({ defenderRoles: [] });
     // A ceasefire signed through diplomacy.
     const room = (await f.attacker.don.client.post("/diplomacy/rooms", { tag: f.defender.tag })).body;
-    const p = (await f.attacker.don.client.post(`/diplomacy/rooms/${room.id}/proposals`, { terms: { kind: "ceasefire", hours: 24 } })).body;
+    const p = (await f.attacker.don.client.post(`/diplomacy/rooms/${room.id}/proposals`, { terms: { kind: "ceasefire", hours: 24 } }, keyed())).body;
     expect((await f.defender.don.client.post(`/proposals/${p.id}/sign`)).body.status).toBe("executed");
     expect((await f.attacker.don.client.post(`/territories/${f.target}/battles`)).body.code).toBe("CEASEFIRE");
 
@@ -255,7 +255,7 @@ describe("while contested", () => {
     const b = await declare(f.attacker, f.target);
     expect((await f.defender.don.client.post(`/territories/${f.target}/abandon`)).body.code).toBe("TERRITORY_CONTESTED");
     const room = (await f.defender.don.client.post("/diplomacy/rooms", { tag: f.attacker.tag })).body;
-    const p = await f.defender.don.client.post(`/diplomacy/rooms/${room.id}/proposals`, { terms: { kind: "territory_transfer", territory: f.target, giver: "proposer", price: 0 } });
+    const p = await f.defender.don.client.post(`/diplomacy/rooms/${room.id}/proposals`, { terms: { kind: "territory_transfer", territory: f.target, giver: "proposer", price: 0 } }, keyed());
     expect((await f.attacker.don.client.post(`/proposals/${p.body.id}/sign`)).body.code).toBe("TERRITORY_CONTESTED");
 
     expect((await commit(f.attacker.don.client, b.id, [f.aMen[0]!.id])).status).toBe(200);

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { BlockList, Report } from "@kots/shared";
-import { aliasedTable, and, asc, eq, or } from "drizzle-orm";
+import { aliasedTable, and, asc, desc, eq, or } from "drizzle-orm";
 import { badRequest, forbidden, notFound } from "../../common/errors";
 import { DB, type Database } from "../../db/db";
 import { chatChannels, chatMessages, messageReports, moderationActions, MODERATION_ACTIONS, playerBlocks, players } from "../../db/schema";
@@ -145,5 +145,15 @@ export class ModerationService {
     details: Record<string, unknown> = {},
   ): Promise<void> {
     await db.insert(moderationActions).values({ moderatorId, action, targetType, targetId, details });
+  }
+
+  /** The audit entries about one target, newest first. */
+  async auditFor(targetType: string, targetId: string, limit: number): Promise<(typeof moderationActions.$inferSelect)[]> {
+    return this.db
+      .select()
+      .from(moderationActions)
+      .where(and(eq(moderationActions.targetType, targetType), eq(moderationActions.targetId, targetId)))
+      .orderBy(desc(moderationActions.id))
+      .limit(limit);
   }
 }
