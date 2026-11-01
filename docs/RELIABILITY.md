@@ -54,3 +54,28 @@ Already covered by the earlier suites: claims, hiring, battle declarations and s
 - abandoning a territory while the upkeep sweep takes it back: it is released once.
 
 None needed a code change: the family row lock and the conditional updates already serialise them. No deadlock appeared, so no deadlock retry or lock timeout was added.
+
+## 9c: Recovery
+### What happens when…
+| Failure | What the game does |
+|---|---|
+| **The database restarts or drops connections** | The api and the worker log "Dropped an idle database connection" and carry on; the pool opens new connections for the next queries (`createPool`, `db/db.ts`). Requests running at that moment fail with a 5xx; the player retries. The live-event listener reconnects every 2 s until the database is back. Health answers 503 meanwhile. |
+| **The api restarts** (deploy, crash, `kill`) | Open pages show "Reconnecting… Live updates will resume shortly." and stay signed in. socket.io reconnects on its own; on reconnect the page reloads what it shows (`resync`). The gateway closes connections without a "disconnect" packet, so browsers retry; that packet now means only that the session ended (logout, ban). |
+| **The api is stopped** (SIGTERM: a deploy, a restart, `docker stop`) | It finishes the requests in progress, closes every connection still open (`forceCloseConnections`, `API_APP_OPTIONS` in `configure.ts`) and exits, typically in well under a second. A connection a client or proxy left half-open no longer keeps it alive (found in the 10b load tests). If shutdown still hasn't finished after 10 s, `main.api.ts` exits anyway (code 1). |
+| **A request gets no answer** | The client gives up after 15 s (`REQUEST_TIMEOUT_MS`, `api/http.ts`) with "The server didn't answer. Try again." A write keeps its Idempotency-Key, so the retry can't act twice (9b). |
+| **The worker is killed mid-job** | The job expires and is retried: 2 minutes for the one-minute sweeps, 5 for the five-minute ones and market drift, 10 for the hourly ones (`QUEUE_OPTIONS`, `worker/boss.ts`; pg-boss's default was 15 minutes). Every sweep is retry-safe. Existing queues pick up the new expiry when the worker starts. |
+
+### Runbook
+- **Database restart:** nothing to do. Check the api and worker logs for "Dropped an idle database connection" followed by normal requests, and `/api/health` back to 200.
+- **Worker crash:** restart it (`npm run start:worker`). Sweeps that were mid-run are retried within their expiry; battle rounds and events run late by at most that much.
+- **API restart:** restart it; open pages reconnect by themselves. If the page shows "Reconnecting…" for more than a minute, the api isn't reachable.
+
+### Tests
+- Server (`apps/server/test/recovery.test.ts`): after the database ends every connection, the api answers the next requests and delivers live events again, and the worker still finishes jobs; the queue expiries are set, including on a queue created before 9c; an api shutting down closes sockets with "transport close", so browsers reconnect. Without the pool's error handler the first test fails with the crash.
+- Client (`apps/client/test/requests.test.ts`): a request that times out or can't connect fails with the player-facing message; a form's key is kept after no answer or a 5xx and renewed after any definite answer.
+- Browser (`e2e/recovery.spec.ts`): the api restarts under an open page (`e2e/run.sh` restarts it when the test creates `test-results/restart-api`); the page shows the notice, clears it, stays signed in, and an admin credit made after the restart reaches it live.
+
+### Not covered
+- The 10 s shutdown deadline is a backstop: nothing found makes the shutdown hang once connections are force-closed, so it isn't exercised by a test. `recovery.test.ts` checks that an api with a half-sent request held open closes within 5 s; without `forceCloseConnections` that test times out.
+- Testing a real job expiry would take minutes (pg-boss checks every 60 s); the test checks the expiries are configured, and the sweeps' retry safety is covered by 9b and the worker tests.
+- Database failover to a replica, backups and restore drills: Phase 11.

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { FamilyRole } from "@kots/content";
 import { checkFamilyAction, type FamilyAction } from "@kots/rules";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { forbidden } from "../../common/errors";
 import { DB, type Database } from "../../db/db";
 import { families, familyMemberships } from "../../db/schema";
@@ -29,14 +29,23 @@ const facts = { id: families.id, name: families.name, tag: families.tag, founded
  */
 @Injectable()
 export class MembershipsService {
-  constructor(@Inject(DB) private readonly db: Database) {}
+  /** Prepared once (Phase 10b): most requests look up the caller's membership. Used outside transactions only. */
+  private readonly membership;
+
+  constructor(@Inject(DB) private readonly db: Database) {
+    this.membership = this.db
+      .select({ familyId: familyMemberships.familyId, role: familyMemberships.role })
+      .from(familyMemberships)
+      .where(eq(familyMemberships.playerId, sql.placeholder("playerId")))
+      .prepare("membership_of_player");
+  }
 
   /** The player's membership, unlocked. For reads. */
   async memberOf(playerId: string, db: DbOrTx = this.db): Promise<ActingMember | null> {
-    const [row] = await db
-      .select({ familyId: familyMemberships.familyId, role: familyMemberships.role })
-      .from(familyMemberships)
-      .where(eq(familyMemberships.playerId, playerId));
+    const [row] =
+      db === this.db
+        ? await this.membership.execute({ playerId })
+        : await db.select({ familyId: familyMemberships.familyId, role: familyMemberships.role }).from(familyMemberships).where(eq(familyMemberships.playerId, playerId));
     return row ? { playerId, ...row } : null;
   }
 

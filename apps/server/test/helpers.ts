@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { ApiModule } from "../src/api.module";
 import type { Clock } from "../src/common/clock";
 import { loadConfig, type ServerConfig } from "../src/config";
-import { configureApp } from "../src/configure";
+import { API_APP_OPTIONS, configureApp } from "../src/configure";
 import { createDb, createPool, runMigrations, type Database } from "../src/db/db";
 
 export const TEST_DATABASE_URL =
@@ -52,7 +52,7 @@ export class TestClock implements Clock {
 }
 
 export async function startApi(config: ServerConfig = testConfig(), clock?: Clock): Promise<TestApi> {
-  const app = await NestFactory.create(ApiModule.forConfig(config, clock), { logger: false });
+  const app = await NestFactory.create(ApiModule.forConfig(config, clock), { ...API_APP_OPTIONS, logger: false });
   configureApp(app, config);
   await app.listen(0);
   const base = (await app.getUrl()).replace("[::1]", "localhost");

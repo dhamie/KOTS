@@ -37,6 +37,15 @@ npm run admin -- ban <handle> "<reason>"               # also: unban <handle>
 ```
 See `docs/ADMIN.md`. Set `DATABASE_URL` to target another database.
 
+## Load tests
+```bash
+npm run test:load      # about 12 minutes; 500 seeded players, k6 in Docker, 1,000 live sockets; see docs/PERFORMANCE.md
+```
+Uses (and resets) the test database. Don't run other heavy work meanwhile.
+
+## Production
+The production images and stack live in `deploy/`; setting up, updating, backups and restoring are in `docs/DEPLOYMENT.md`. Production migrations run with `node dist/migrate.cjs` (no drizzle-kit needed), which reads the same migration history as `npm run db:migrate`.
+
 ## City events
 ```bash
 npm run event:trigger street_festival lagos-island   # start a city event now (audited); see docs/EVENTS.md

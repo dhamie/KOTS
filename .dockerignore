@@ -1,0 +1,15 @@
+# Keeps the production image build (deploy/Dockerfile) small and free of local state and secrets.
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+.git
+.env
+.env.*
+**/.env
+deploy/.env
+deploy/backups
+load/results
+test-results
+playwright-report
+coverage
+apps/server/.ab

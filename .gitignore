@@ -24,3 +24,9 @@ npm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Load-test output (includes session cookies for the seeded test players)
+load/results/
+
+# Production backups on the server (deploy/backup.sh)
+deploy/backups/

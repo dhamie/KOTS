@@ -1,0 +1,30 @@
+# SITE_ADDRESS is the game's domain (e.g. kots.example). Caddy gets and renews its certificate automatically.
+# For a local check, SITE_ADDRESS=localhost uses Caddy's own local certificate authority.
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# The api and the live connection (/api/socket.io, websocket only). Caddy replaces any X-Forwarded-For a client
+	# sends with the client's real address, and the api trusts exactly this one hop (TRUST_PROXY=1).
+	handle /api/* {
+		reverse_proxy api:4100
+	}
+
+	# The client. Built assets have hashed names and can be cached for ever; index.html must always be fresh.
+	handle {
+		root * /srv
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		@page not path /assets/*
+		header @page Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -16,7 +16,8 @@
     "mod:grant": "vite build && node dist/mod.cjs grant",
     "mod:revoke": "vite build && node dist/mod.cjs revoke",
     "event:trigger": "vite build && node dist/event.cjs",
-    "admin": "vite build && node dist/admin.cjs"
+    "admin": "vite build && node dist/admin.cjs",
+    "seed:load": "vite build && node dist/seed-load.cjs"
   },
   "dependencies": {
     "@kots/content": "*",

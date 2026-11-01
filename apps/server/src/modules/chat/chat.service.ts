@@ -249,14 +249,19 @@ export class ChatService {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  /** Finds or creates a family's channel. Family channels are made on first use. */
+  /** Finds or creates a family's channel. Family channels are made on first use; after that, only read (Phase 10b). */
   private async familyChannel(familyId: string): Promise<Channel> {
+    const find = async () =>
+      (
+        await this.db
+          .select()
+          .from(chatChannels)
+          .where(and(eq(chatChannels.kind, "family"), eq(chatChannels.familyId, familyId)))
+      )[0];
+    const found = await find();
+    if (found) return found;
     await this.db.insert(chatChannels).values({ kind: "family", familyId }).onConflictDoNothing();
-    const [c] = await this.db
-      .select()
-      .from(chatChannels)
-      .where(and(eq(chatChannels.kind, "family"), eq(chatChannels.familyId, familyId)));
-    return c!;
+    return (await find())!;
   }
 
   /** The channel, if the player may read and write it now. A channel they can't use looks like one that doesn't exist. */

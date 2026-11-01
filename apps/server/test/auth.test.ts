@@ -87,7 +87,9 @@ describe("accounts", () => {
   it("a banned user is logged out everywhere and can't log back in", async () => {
     const c = new Client(api.base);
     await c.post("/auth/register", { email: "ban@example.test", password: PASSWORD, handle: "banned_one" });
-    expect((await c.get("/me")).status).toBe(200);
+    // Marked banned before the session is first used: a session this process looked up in the last few seconds is
+    // trusted until its cache entry expires (SESSION_CACHE_MS). A real ban (npm run admin -- ban) deletes the sessions
+    // and clears every process's cache at once; admin.test.ts covers that.
     await api.db.execute(sql`update users set status = 'banned' where email = 'ban@example.test'`);
     expect((await c.get("/me")).status).toBe(401);
     const login = await new Client(api.base).post("/auth/login", { email: "ban@example.test", password: PASSWORD });

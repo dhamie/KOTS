@@ -808,3 +808,19 @@ body,
   border-radius: 2px;
   color: #c9a96e;
 }
+
+/* Phase 9c: shown while the live connection is down and retrying. */
+.connection-notice {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #f0a35e;
+  border-radius: 6px;
+  background: rgba(20, 17, 15, 0.92);
+  color: #f0a35e;
+  font-size: 13px;
+}

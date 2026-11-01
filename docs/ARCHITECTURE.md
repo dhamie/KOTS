@@ -97,6 +97,8 @@ This is the approved Phase 0 architecture for the game described in `docs/BRIEF.
 
 > **Phase 9 decisions (2026-10-14):** see `docs/RELIABILITY.md`.
 > - 9a: every route must have a row in the access table in `test/access.test.ts`, checked against the routes the api actually serves.
+> - 10b: prepared statements for the hottest reads; a 10 s per-process session cache cleared by `session-ended`; chat channel listing only reads (see docs/PERFORMANCE.md).
+> - 9c: the pools log dropped connections instead of crashing; each job queue has an expiry (2–10 min) so a crashed worker's job is retried soon; the client times requests out after 15 s and shows "Reconnecting…"; an api shutdown closes sockets without a disconnect packet so browsers reconnect.
 > - 9b: trade offers and diplomacy proposals require an `Idempotency-Key`, like market orders (migration 0012). The client keeps a form's key until the server answers definitely, so a retry after a lost response reuses it.
 
 ## 2. Repository structure (start small, grow on demand)
@@ -278,8 +280,8 @@ Each phase needs explicit approval before it starts, and each one ends with a ch
 | 7 | Territory battles: declaration, preparation, orders, scheduled round resolution, report and replay. Split: **7a** rules and server; **7b** screens | done (2026-10-11): 7a rules and server, 7b screens |
 | 8 | Event framework and first event types, first NPC influence profiles. Split: **8a** event framework and four event types; **8b** NPC officials and **8c** basic admin tools, each still to be proposed | done (2026-10-14): 8a events, 8b officials, 8c admin tools |
 | — | **MVP complete** at the end of Phase 8 | done (2026-10-14) |
-| 9 | Multiplayer reliability: concurrency, reconnects, retries, access control, recovery. Split: **9a** access control; **9b** concurrency and retries; **9c** recovery | in progress: 9a done (signed off 2026-10-14); 9b built, awaiting sign-off |
-| 10 | Performance and scaling: profiling, k6 load tests, optimisation, deployment design, hosting choice | — |
+| 9 | Multiplayer reliability: concurrency, reconnects, retries, access control, recovery. Split: **9a** access control; **9b** concurrency and retries; **9c** recovery | done (2026-10-28): 9a, 9b, 9c (see docs/RELIABILITY.md) |
+| 10 | Performance and scaling: profiling, k6 load tests, optimisation, deployment design, hosting choice. Split: **10a** load tests and baseline; **10b** optimisation; **10c** deployment design and hosting | in progress: 10a and 10b done (signed off 2026-10-28; see docs/PERFORMANCE.md); 10c-1 deployable build built 2026-10-31, option A chosen (see docs/DEPLOYMENT.md); 10c-2 first deployment next |
 | 11 | Beta operations: admin and moderation, monitoring, backups and restore drills, CI/CD, balancing tools | — |
 
 After the MVP: base assaults, multi-family wars and coalitions, deeper NPC politics, seasons, and map expansion. Each is proposed and approved separately.

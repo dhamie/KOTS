@@ -34,8 +34,25 @@ DATABASE_URL="$TEST_DATABASE_URL" node apps/server/dist/seed.cjs
 free_port "$API_PORT"
 free_port "$WEB_PORT"
 mkdir -p test-results
-LOG_REQUESTS=1 API_PORT=$API_PORT DATABASE_URL="$TEST_DATABASE_URL" ALLOWED_ORIGINS="http://$HOST_IP:$WEB_PORT" \
-  node apps/server/dist/api.cjs > test-results/e2e-api.log 2>&1 &
+# The api runs under a small supervisor: a test asks for a restart by creating $RESTART_FLAG (e2e/recovery.spec.ts),
+# as a deploy would replace the process. If the api exits on its own, it stays down and the tests fail.
+RESTART_FLAG=test-results/restart-api
+rm -f "$RESTART_FLAG"
+: > test-results/e2e-api.log
+(
+  while true; do
+    LOG_REQUESTS=1 API_PORT=$API_PORT DATABASE_URL="$TEST_DATABASE_URL" ALLOWED_ORIGINS="http://$HOST_IP:$WEB_PORT" \
+      node apps/server/dist/api.cjs >> test-results/e2e-api.log 2>&1 &
+    api=$!
+    while kill -0 "$api" 2>/dev/null && [ ! -f "$RESTART_FLAG" ]; do sleep 0.5; done
+    [ -f "$RESTART_FLAG" ] || exit 0
+    rm -f "$RESTART_FLAG"
+    kill "$api" 2>/dev/null || true
+    wait "$api" 2>/dev/null || true
+    # Down for a few seconds, so the browser sees the connection lost.
+    sleep 3
+  done
+) &
 pids+=($!)
 # Only the battle and event sweeps: the battle test waits for a round, the event test for an event it triggers.
 # Other jobs (market drift, upkeep, the hourly event roll) would change state under the other tests.

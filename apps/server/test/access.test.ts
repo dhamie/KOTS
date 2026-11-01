@@ -205,9 +205,11 @@ describe("access control", () => {
 
   it("every route except the public ones refuses a caller with no session, and a banned player whose session survived", async () => {
     const { request } = w;
-    const banned = await newPlayer(api.base);
-    // Only the account is marked: its session row stays, so this checks the status test in session lookup itself.
-    await api.db.execute(sql`update users set status = 'banned' where id = (select user_id from players where id = ${banned.id})`);
+    // Registered but not yet used, then only the account is marked: its session row stays, so this checks the status
+    // test in session lookup itself (a session already cached by this process would be trusted for SESSION_CACHE_MS).
+    const banned = { client: new Client(api.base) };
+    expect((await banned.client.post("/auth/register", { email: "access_banned@example.test", password: "correct horse battery", handle: "access_banned" })).status).toBe(204);
+    await api.db.execute(sql`update users set status = 'banned' where email = 'access_banned@example.test'`);
     const anon = new Client(api.base);
     const refused: string[] = [];
     for (const route of Object.keys(ACCESS).filter((r) => ACCESS[r] !== "public")) {

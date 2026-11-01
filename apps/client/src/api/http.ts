@@ -54,8 +54,28 @@ export class ApiError extends Error {
   }
 }
 
+/** How long a request may go unanswered before the player is told (Phase 9c). The slowest normal one is about 7 s. */
+export const REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * The request got no answer: it timed out, or the server couldn't be reached. Unlike an ApiError, the outcome is
+ * unknown (a write may have happened), so a form keeps its Idempotency-Key for the retry (see useRequestKey).
+ */
+export class NoAnswerError extends Error {}
+
+/** fetch with the request timeout, turning "no answer" into NoAnswerError with a message for the player. */
+async function send(url: string, init: RequestInit = {}): Promise<Response> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "TimeoutError") throw new NoAnswerError("The server didn't answer. Try again.");
+    if (e instanceof TypeError) throw new NoAnswerError("Can't reach the server. Check your connection and try again.");
+    throw e;
+  }
+}
+
 async function request<T extends z.ZodType>(method: string, path: string, schema: T | null, body?: unknown, headers: Record<string, string> = {}): Promise<z.infer<T>> {
-  const res = await fetch(`/api${path}`, {
+  const res = await send(`/api${path}`, {
     method,
     headers: body === undefined ? headers : { ...headers, "content-type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -72,7 +92,7 @@ async function request<T extends z.ZodType>(method: string, path: string, schema
 
 /** The health endpoint answers 503 with a valid body when the database is down, so parse both. */
 export async function fetchHealth(): Promise<HealthResponse> {
-  const res = await fetch("/api/health");
+  const res = await send("/api/health");
   if (!res.ok && res.status !== 503) throw new Error(`HTTP ${res.status}`);
   return HealthResponse.parse(await res.json());
 }

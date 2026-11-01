@@ -36,6 +36,9 @@ const REFUSALS = {
  */
 @Injectable()
 export class FamiliesService {
+  /** Prepared once (Phase 10b): every /me reads it. */
+  private readonly membership;
+
   constructor(
     @Inject(DB) private readonly db: Database,
     @Inject(CLOCK) private readonly clock: Clock,
@@ -45,16 +48,19 @@ export class FamiliesService {
     private readonly territories: TerritoriesService,
     private readonly henchmen: HenchmenService,
     private readonly realtime: RealtimeService,
-  ) {}
+  ) {
+    this.membership = this.db
+      .select({ role: familyMemberships.role, id: families.id, name: families.name, tag: families.tag })
+      .from(familyMemberships)
+      .innerJoin(families, eq(families.id, familyMemberships.familyId))
+      .where(eq(familyMemberships.playerId, sql.placeholder("playerId")))
+      .prepare("membership_summary");
+  }
 
   // ── Reads ────────────────────────────────────────────────────────────────
 
   async membershipOf(playerId: string): Promise<MembershipSummary | null> {
-    const [row] = await this.db
-      .select({ role: familyMemberships.role, id: families.id, name: families.name, tag: families.tag })
-      .from(familyMemberships)
-      .innerJoin(families, eq(families.id, familyMemberships.familyId))
-      .where(eq(familyMemberships.playerId, playerId));
+    const [row] = await this.membership.execute({ playerId });
     if (!row) return null;
     return { family: { id: row.id, name: row.name, tag: row.tag }, role: row.role, permissions: [...ROLE_PERMISSIONS[row.role]] };
   }

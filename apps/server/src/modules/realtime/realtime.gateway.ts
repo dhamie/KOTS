@@ -54,8 +54,10 @@ export class RealtimeGateway implements OnApplicationBootstrap, BeforeApplicatio
   async beforeApplicationShutdown(): Promise<void> {
     this.closing = true;
     await this.listener?.end().catch(() => undefined);
-    this.io?.disconnectSockets(true);
-    // Not io.close(): that also closes the HTTP server, which Nest closes itself.
+    // Close the connections without a disconnect packet: browsers see "transport close" and reconnect to the next
+    // api process (Phase 9c). A server disconnect ("io server disconnect") would stop them reconnecting, and the
+    // client reads it as the session ending (logout, ban). Not io.close(): that also closes the HTTP server, which
+    // Nest closes itself.
     this.io?.engine.close();
   }
 
@@ -145,6 +147,8 @@ export class RealtimeGateway implements OnApplicationBootstrap, BeforeApplicatio
       }
       return this.emit([rooms.player(envelope.playerId)], { type: "me.changed" });
     }
+    // Ended (logout or ban, in any process): this process stops trusting its cached copy before anything else.
+    this.sessions.forget(envelope.sessionId);
     for (const socket of this.io?.sockets.sockets.values() ?? []) {
       if ((socket.data as SocketData).sessionId === envelope.sessionId) socket.disconnect(true);
     }

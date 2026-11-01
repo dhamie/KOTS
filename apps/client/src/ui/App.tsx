@@ -1,8 +1,8 @@
 import { MARKETS } from "@kots/content";
 import type { MeResponse, Notification } from "@kots/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, ApiError } from "../api/http";
-import { connectLive, disconnectLive, onLive } from "../api/live";
+import { api, ApiError, NoAnswerError } from "../api/http";
+import { connectLive, disconnectLive, onLive, onLiveStatus } from "../api/live";
 import { mapBus } from "../map/bus";
 import { MapView } from "../map/MapView";
 import { AuthPanel } from "./auth/AuthPanel";
@@ -36,12 +36,16 @@ export function App() {
   const [chatTab, setChatTab] = useState<ChatTab | null>(null);
   const [battleId, setBattleId] = useState<string | null>(null);
   const chat = useChat(signedIn ? session.me : null);
+  const [reconnecting, setReconnecting] = useState(false);
+  useEffect(() => onLiveStatus((s) => setReconnecting(s === "reconnecting")), []);
 
   const loadMe = useCallback(async () => {
     try {
       setSession({ kind: "signed-in", me: await api.me() });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) setSession({ kind: "anonymous" });
+      // A reload that got no answer (the api restarting) keeps a signed-in page as it is; the next resync retries.
+      else if (e instanceof NoAnswerError) setSession((s) => (s.kind === "signed-in" ? s : { kind: "error", message: e.message }));
       else setSession({ kind: "error", message: e instanceof Error ? e.message : String(e) });
     }
   }, []);
@@ -212,6 +216,11 @@ export function App() {
       )}
       {session.kind === "anonymous" && <AuthPanel onAuthenticated={() => void loadMe()} />}
       {session.kind === "error" && <p className="panel side error">{session.message}</p>}
+      {signedIn && reconnecting && (
+        <p className="connection-notice" role="status">
+          Reconnecting… Live updates will resume shortly.
+        </p>
+      )}
       <HealthPanel />
     </div>
   );

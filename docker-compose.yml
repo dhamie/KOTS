@@ -4,6 +4,8 @@ name: kots
 services:
   db:
     image: postgres:16-alpine
+    # pg_stat_statements is loaded for the load tests (load/run.sh creates the extension in kots_test only).
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
     environment:
       POSTGRES_USER: kots
       POSTGRES_PASSWORD: kots
